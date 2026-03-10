@@ -5,6 +5,9 @@ var Schema = mongoose.Schema;
 const bcrypt = require('bcrypt');
 
 const saltRounds = 10;
+const crypto = require('crypto');
+const Token = require('../models/token');
+const mailer = require('../mailer/mailer');
 
 const validateEmail = function(email) {
     var re = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
@@ -62,5 +65,36 @@ usuarioSchema.methods.reservar = function (bicicleta, desde, hasta, callback) {
     console.log(reserva);
     reserva.save(callback);
 }
+
+usuarioSchema.methods.enviar_email_bienvenida = function (cb) {
+    const token = new Token({ userId: this._id, token: crypto.randomBytes(16).toString('hex') });
+    const email_destination = this.email;
+
+    token.save(function (err) {
+        if (err) {
+            console.log(err.message);
+        }
+
+        const mailOptions = {
+            from: 'demosendgrid123@gmail.com',
+            to: email_destination,
+            subject: 'Verificación de Cuenta',
+            text: 'Hola,\n\n' + 'Por favor, para verificar su cuenta haga click en este link:\n\n' +
+                  'http://localhost:3000' + '\/token/confirmation\/' + token.token + '.\n',
+            html: 'Hola,<br><br>' + 'Por favor, para verificar su cuenta haga click en este link:<br><br>' +
+                  '<a href="' + 'http://localhost:3000' + '\/token/confirmation\/' + token.token + 
+                  '" target="_blank">Activar Usuario</a>.<br>'
+        };
+
+        mailer.sendMail(mailOptions, function (err) {
+            if (err) {
+                console.log(err.message);
+            }
+
+            console.log('Se ha enviado un email de verificación a ' + email_destination + '.');
+        });
+    });
+}
+
 
 module.exports = mongoose.model('Usuario', usuarioSchema);
