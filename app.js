@@ -108,8 +108,8 @@ app.use('/usuarios', loggedIn, usuariosRouter);
 app.use('/token', tokenRouter);
 
 app.use('/bicicletas', loggedIn, bicicletasRouter);
-app.use('/api/bicicletas', bicicletasAPIRouter);
-app.use('/api/usuarios', usuariosAPIRouter);
+app.use('/api/bicicletas', validarUsuario, bicicletasAPIRouter);
+app.use('/api/usuarios', validarUsuario, usuariosAPIRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
@@ -135,6 +135,19 @@ function loggedIn(req, res, next) {
     console.log("Usuario sin loguearse");
     res.redirect("/login");
   }
+}
+
+function validarUsuario(req, res, next) {
+  jwt.verify(req.headers['x-access-token'], req.app.get('secretKey'), function (err, decoded) {
+    if (err) {
+      res.json({ status: 'error', message: err.message, data: null });
+    } else {
+      req.body.userId = decoded.id;
+      console.log('JWT Verify: ' + decoded);
+
+      next();
+    }
+  });
 }
 
 module.exports = app;
