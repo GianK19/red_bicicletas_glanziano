@@ -5,6 +5,7 @@ var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 const passport = require('./config/passport');
 const session = require('express-session');
+const jwt = require('jsonwebtoken');
 
 const Usuario = require('./models/usuario');
 const Token = require('./models/token');
@@ -16,6 +17,7 @@ var tokenRouter = require('./routes/token');
 var bicicletasRouter = require('./routes/bicicletas');
 var bicicletasAPIRouter = require('./routes/api/bicicletas');
 var usuariosAPIRouter = require('./routes/api/usuarios');
+var authAPIRouter = require('./routes/api/auth');
 
 //mongoose 
 var mongoose = require('mongoose');
@@ -23,6 +25,8 @@ const { assert } = require('console')
 
 
 var app = express();
+
+app.set("secretKey", "jwt_pwd_!!223344");
 
 const store = new session.MemoryStore();
 app.use(session({
@@ -110,6 +114,7 @@ app.use('/token', tokenRouter);
 app.use('/bicicletas', loggedIn, bicicletasRouter);
 app.use('/api/bicicletas', validarUsuario, bicicletasAPIRouter);
 app.use('/api/usuarios', validarUsuario, usuariosAPIRouter);
+app.use('/api/auth', authAPIRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
