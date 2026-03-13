@@ -6,6 +6,10 @@ var logger = require('morgan');
 const passport = require('./config/passport');
 const session = require('express-session');
 
+const Usuario = require('./models/usuario');
+const Token = require('./models/token');
+
+
 var indexRouter = require('./routes/index');
 var usuariosRouter = require('./routes/usuarios');
 var tokenRouter = require('./routes/token');
@@ -13,8 +17,14 @@ var bicicletasRouter = require('./routes/bicicletas');
 var bicicletasAPIRouter = require('./routes/api/bicicletas');
 var usuariosAPIRouter = require('./routes/api/usuarios');
 
+//mongoose 
+var mongoose = require('mongoose');
+const { assert } = require('console')
 
-const store = new session.MemoryStore;
+
+var app = express();
+
+const store = new session.MemoryStore();
 app.use(session({
   cookie: { maxAge: 240 * 60 * 60 * 1000 },
   store: store,
@@ -22,8 +32,6 @@ app.use(session({
   resave: 'true',
   secret: 'red_bicis_!!!***!".!.!.123123'
 }));
-
-var app = express();
 
 var mongoose = require('mongoose');
 var mongoDB = 'mongodb://localhost/red_bicicletas';
@@ -43,6 +51,57 @@ app.use(cookieParser());
 app.use(passport.initialize());
 app.use(passport.session());
 app.use(express.static(path.join(__dirname, 'public')));
+
+app.get('/login', function(req, res) {
+  res.render('session/login');
+});
+
+app.post('/login', function(req, res, next) {
+  passport.authenticate('local', function(err, usuario, info){
+    if (err) { 
+      return next(err);
+    }
+
+    if (!usuario) { 
+      return res.render('session/login', { info });
+    }
+
+    req.logIn(usuario, function (err) {
+      if (err) {
+        return next(err);
+      }
+
+      return res.redirect('/');
+    });
+
+  })(req, res, next);
+});
+
+app.get('/logout', function(req, res) {
+  req.logout();
+  res.redirect('/');
+});
+
+app.get('/forgotPassword', function(req, res) {
+  res.render('session/forgotPassword');
+});
+
+app.post('/forgotPassword', function(req, res, next) {
+  Usuario.findOne({ email: req.body.email }, function (err, usuario) {
+    if (!usuario) {
+       return res.render('session/forgotPassword', {
+         info: { message: 'No existe el email para el usuario existente' }
+      });
+    }
+
+    usuario.resetPassword(function (err) {
+      if (err) return next(err);
+       console.log('session/forgotPasswordMessage'); 
+    });
+
+    res.render('session/forgotPasswordMessage')
+  });
+});
 
 app.use('/', indexRouter);
 app.use('/usuarios', usuariosRouter);

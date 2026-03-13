@@ -96,5 +96,37 @@ usuarioSchema.methods.enviar_email_bienvenida = function (cb) {
     });
 }
 
+usuarioSchema.methods.resetPassword = function (cb) {
+    const token = new Token({ usuario: this.id, token: crypto.randomBytes(16).toString('hex') });
+    const email_destination = this.email;
+
+    token.save(function (err) {
+        if (err) {
+            return cb(err);
+        }
+
+        const mailOptions = {
+            from: 'demosendgrid123@gmail.com',
+            to: email_destination,
+            subject: 'Reseteo de Password de Cuenta',
+            text: 'Hola,\n\n' + 'Por favor, para resetear el password de su cuenta haga click en este link:\n\n' +
+                  process.env.HOST + '\/resetPassword\/' + token.token + '.\n',
+            html: 'Hola,<br><br>' + 'Por favor, para resetear el password de su cuenta haga click en este link:<br><br>' +
+                  '<a href="' + process.env.HOST+ '\/resetPassword\/' + token.token + 
+                  '" target="_blank">Restablecer Contraseña</a>.<br>'
+        };
+
+        mailer.sendMail(mailOptions, function (err) {
+            if (err) {
+                return cb(err);
+            }
+
+            console.log('Se envió un email para restablecer contraseña a ' + email_destination + '.');
+        });
+
+        cb(null);
+    });
+}
+
 
 module.exports = mongoose.model('Usuario', usuarioSchema);
