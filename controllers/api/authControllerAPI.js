@@ -57,3 +57,25 @@ exports.forgotPassword = function (req, res, next) {
         });
     });
 };
+
+exports.authFacebookToken = function (req, res, next) {
+    if (req.user) {
+        req.user.save().then( () => {
+            const token = jwt.sign({ id: req.user.id }, req.app.get('secretKey'), { expiresIn: '7d' });
+
+            res.status(200).json({
+                message: 'Usuario encontrado o creado!',
+                data: {
+                    user: req.user,
+                    token: token
+                }
+            });
+        }).catch( (err) => {
+            console.log(err);
+            res.status(500).json({ message: err.message });
+        });
+
+    } else {
+        res.status(401);
+    }
+};
