@@ -45,7 +45,7 @@ passport.use(new GoogleStrategy({
     });
   }
 ));
-
+/*
 passport.use(new FacebookTokenStrategy({
   clientID: process.env.FACEBOOK_ID,
   clientSecret: process.env.FACEBOOK_SECRET
@@ -65,7 +65,7 @@ passport.use(new FacebookTokenStrategy({
     }
   }
 ));
-
+*/
 passport.serializeUser(function (user, cb) {
     cb(null, user.id);
 });
